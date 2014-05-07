@@ -3,7 +3,7 @@
 XPLORA="http://www.atresplayer.com/static/directos/XPLORALIVE_free.smil"
 LASEXTA="http://www.atresplayer.com/static/directos/LASEXTA_free.smil"
 ANTENA3="http://www.atresplayer.com/static/directos/ANTENA3_free.smil"
-NOVA="http://www.atresplayer.com/static/directos/EVENTOS6_free.smil"
+EVENTOS="http://www.atresplayer.com/static/directos/EVENTOS6_free.smil"
 
 function usage() {
    echo ""
@@ -28,7 +28,7 @@ function usage() {
    echo "   XPLORA"
    echo "   LASEXTA"
    echo "   ANTENA3"
-   echo "   "
+   echo "   EVENTOS"
 }
 
 HQ=false
