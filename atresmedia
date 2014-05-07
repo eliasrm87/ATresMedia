@@ -1,0 +1,114 @@
+#! /bin/bash
+
+XPLORA="http://www.atresplayer.com/static/directos/XPLORALIVE_free.smil"
+LASEXTA="http://www.atresplayer.com/static/directos/LASEXTA_free.smil"
+ANTENA3="http://www.atresplayer.com/static/directos/ANTENA3_free.smil"
+NOVA="http://www.atresplayer.com/static/directos/EVENTOS6_free.smil"
+
+function usage() {
+   echo ""
+   echo "Nombre:"
+   echo "   radio - Reproduce tv streaming proporcionado por atresplayer."
+   echo ""
+   echo ""
+   echo "Synopsis:"
+   echo "   atresmedia [-h] [-v] [-k] -m CANAL"
+   echo ""
+   echo ""
+   echo "Opciones:"
+   echo "   -m CANAL"
+   echo "        Especifica el nombre del canal que se desea ver."
+   echo ""
+   echo "   -h   Selecciona un el servidor con mayor bitrate"
+   echo "   -v   Muestra mas información."
+   echo "   -k   Termina el proceso de reproducción actual"
+   echo ""
+   echo ""
+   echo "Canales disponibles:"
+   echo "   XPLORA"
+   echo "   LASEXTA"
+   echo "   ANTENA3"
+   echo "   "
+}
+
+HQ=false
+Verbose=false
+Kill=false
+MOUNT=""
+
+while getopts ":m:hvk" opt; do
+  case $opt in
+    m)
+      MOUNT=$OPTARG
+    ;;
+    h)
+      HQ=true
+    ;;
+    v)
+      Verbose=true
+    ;;
+    k)
+      Kill=true
+    ;;
+    \?)
+      usage
+      exit
+    ;;
+  esac
+done
+
+kill -9 `cat /tmp/atresmedia.pid 2> /dev/null` 2> /dev/null
+rm /tmp/atresmedia.pid 2> /dev/null
+if [ $Kill == true ]; then
+  exit
+fi
+
+if [[ $MOUNT == "" ]]; then
+   usage
+   exit
+fi
+
+eval smil=\$$MOUNT
+
+if [ $Verbose == true ]; then
+   echo "Getting $smil"
+fi
+
+smil=$(curl $smil 2> /dev/null)
+base=$(echo "$smil" | grep "\<meta base" | cut -d "\"" -f2)
+
+if [ $Verbose == true ]; then
+   echo "Parsing..."
+fi
+
+if [ $HQ == true ]; then
+   bitrate=0
+else
+   bitrate=999999999
+fi
+video_src=""
+while read video; do 
+   br=$(echo $video | cut -d "\"" -f4)
+   if [ $HQ == true ]; then
+      if [ $br -gt $bitrate ]; then
+         bitrate=$br
+         video_src=$(echo $video | cut -d "\"" -f2)
+      fi
+   else
+      if [ $br -lt $bitrate ]; then
+         bitrate=$br
+         video_src=$(echo $video | cut -d "\"" -f2)
+      fi
+   fi
+done < <(echo "$smil" | grep "\<video")
+
+if [ $Verbose == true ]; then
+   echo "Playing $base$video_src"
+fi
+
+mkfifo /tmp/atresmedia.fifo.mp4 2> /dev/null
+
+rtmpdump -vq -r "$base" -y $video_src 2> /dev/null > /tmp/atresmedia.fifo.mp4 &
+echo $! > /tmp/atresmedia.pid
+mplayer /tmp/atresmedia.fifo.mp4 > /dev/null 2> /dev/null &
+echo $! >> /tmp/atresmedia.pid
