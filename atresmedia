@@ -9,7 +9,7 @@ EVENTOS6="http://www.atresplayer.com/static/directos/EVENTOS6_free.smil"
 function usage() {
    echo ""
    echo "Nombre:"
-   echo "   radio - Reproduce tv streaming proporcionado por atresplayer."
+   echo "   atresmedia - Reproduce tv streaming proporcionado por atresplayer."
    echo ""
    echo ""
    echo "Synopsis:"
